@@ -2,7 +2,7 @@
 ## 1、运行后可输入指令进行不同模块的测试
 ```go
 go run main.go
-```go
+```
 <img width="641" alt="image" src="https://github.com/ccyy1003/influx-test/assets/135438861/53d937df-6f5a-4b3f-b93e-50319ca69df4">
 
 ## 2、对于测试按以下格式打印
