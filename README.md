@@ -27,9 +27,9 @@ curl -X POST http://127.0.0.1:32325/test -d "opt=mgdb"
 错误信息：【语法/接口名】错误命令：错误信息  
 
 ## 测试语法及样例
-| cq                 	|                                                                                                                                                                                  	|   	|   	|   	|
-|--------------------	|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|---	|---	|---	|
-| CREATE CONTINUOUS  	| create continuous query min_car_cq on mydb begin select mean(speed) as speed, mean(temp) as temp into min_car from car group by time(1m), * end                                  	|   	|   	|   	|
-| CREATE CONTINUOUS1 	| create continuous query hour_car_cq on mydb resample every 15m for 1h begin select mean(speed) as speed, mean(temp) as temp into hour_car from car group by time(1h, 30m), * end 	|   	|   	|   	|
-| SHOW CONTINUOUS    	| show continuous queries                                                                                                                                                          	|   	|   	|   	|
-| DROP CONTINUOUS    	| drop continuous query hour_car_cq on mydb                                                                                                                                        	|   	|   	|   	|
+| cq                 	|                                                                                                                                                                                  	|
+|--------------------	|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| CREATE CONTINUOUS  	| create continuous query min_car_cq on mydb begin select mean(speed) as speed, mean(temp) as temp into min_car from car group by time(1m), * end                                  	|
+| CREATE CONTINUOUS1 	| create continuous query hour_car_cq on mydb resample every 15m for 1h begin select mean(speed) as speed, mean(temp) as temp into hour_car from car group by time(1h, 30m), * end 	|
+| SHOW CONTINUOUS    	| show continuous queries                                                                                                                                                          	|
+| DROP CONTINUOUS    	| drop continuous query hour_car_cq on mydb                                                                                                                                        	|
