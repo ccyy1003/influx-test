@@ -5,10 +5,10 @@ import (
 )
 
 type TestRes struct {
-	TaskName string
-	PassCnt  int
-	TotalCnt int
-	ErrInfos []string
+	TaskName string   `json:"taskname"`
+	PassCnt  int      `json:"passcnt"`
+	TotalCnt int      `json:"totalcnt"`
+	ErrInfos []string `json:"errinfos"`
 }
 
 func (tr *TestRes) GetPassCnt() int {

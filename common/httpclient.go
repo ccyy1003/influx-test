@@ -17,15 +17,15 @@ type ClntCtx struct {
 
 var HttpClnt = new(ClntCtx)
 
-func (c *ClntCtx) Init(addr string, username string, password string) error {
-	c.Addr = addr
-	c.Username = username
-	c.Password = password
+func (c *ClntCtx) Init() error {
+	c.Addr = Addr
+	c.Username = Username
+	c.Password = Password
 
 	cc, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     addr,
-		Username: username,
-		Password: password,
+		Addr:     c.Addr,
+		Username: c.Username,
+		Password: c.Password,
 	})
 	if err != nil {
 		log.Fatal(err)

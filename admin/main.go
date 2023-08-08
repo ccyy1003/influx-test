@@ -1,19 +1,20 @@
 package main
 
 import (
-	"fmt"
-	_ "github.com/influxdata/influxdb/client/v2"
+	"encoding/json"
 	"influx-test/common"
 	"influx-test/data"
 	"influx-test/tasks"
 	"log"
-	"os"
+	"net/http"
+
+	_ "github.com/influxdata/influxdb/client/v2"
 	//"sync"
 )
 
 const (
-	mydb = "mydb"
-	addr = "http://localhost:8086"
+	mydb        = "mydb"
+	server_port = "32325"
 )
 
 const (
@@ -26,10 +27,6 @@ type Client struct {
 	//WG       sync.WaitGroup
 }
 
-func (c *Client) Init() {
-	c.HttpClnt.Init(addr, os.Getenv("INFLUX_USER"), os.Getenv("INFLUX_PWD"))
-}
-
 func (c *Client) Close() {
 	// Close client resources
 	if err := c.HttpClnt.Client.Close(); err != nil {
@@ -37,130 +34,155 @@ func (c *Client) Close() {
 	}
 	//close(c.Chan)
 }
-func (c *Client) TestCQ() {
+func (c *Client) TestCQ() common.TestRes {
 
 	data.Init(c.HttpClnt.Client)
 	tr := tasks.DoTask(c.HttpClnt.Client, &tasks.CQTask{})
-	tr.Print()
-
+	return tr
 }
 
-func (c *Client) TestFunc() {
+func (c *Client) TestFunc() common.TestRes {
 
 	data.Init(c.HttpClnt.Client)
 	tr := tasks.DoTask(c.HttpClnt.Client, &tasks.FuncTask{})
-	tr.Print()
+	return tr
 
 }
 
-func (c *Client) TestHint() {
+func (c *Client) TestHint() common.TestRes {
 
 	data.Init(c.HttpClnt.Client)
 	tr := tasks.DoTask(c.HttpClnt.Client, &tasks.HintTask{})
-	tr.Print()
+	return tr
 
 }
-func (c *Client) TestMathOpt() {
+func (c *Client) TestMathOpt() common.TestRes {
 
 	data.Init(c.HttpClnt.Client)
 	tr := tasks.DoTask(c.HttpClnt.Client, &tasks.MathOptTask{})
-	tr.Print()
+	return tr
 
 }
 
-func (c *Client) TestInterface() {
+func (c *Client) TestInterface() common.TestRes {
 
 	data.Init(c.HttpClnt.Client)
 	tr := tasks.DoTask(c.HttpClnt.Client, &tasks.OtherTask{})
-	tr.Print()
+	return tr
 
 }
 
-func (c *Client) TestMgDb() {
+func (c *Client) TestMgDb() common.TestRes {
 
 	data.Init(c.HttpClnt.Client)
 	tr := tasks.DoTask(c.HttpClnt.Client, &tasks.MgDbTask{})
-	tr.Print()
+	return tr
 
 }
-func (c *Client) TestQuery() {
+func (c *Client) TestQuery() common.TestRes {
 
 	data.Init(c.HttpClnt.Client)
 	tr := tasks.DoTask(c.HttpClnt.Client, &tasks.QueryTask{})
-	tr.Print()
+	return tr
 
 }
-func (c *Client) TestShow() {
+func (c *Client) TestShow() common.TestRes {
 
 	data.Init(c.HttpClnt.Client)
 	tr := tasks.DoTask(c.HttpClnt.Client, &tasks.ShowTask{})
-	tr.Print()
+	return tr
 
 }
 
-func (c *Client) TestAll() {
-	c.TestCQ()
-	c.TestFunc()
-	c.TestHint()
-	c.TestMathOpt()
-	c.TestInterface()
-	c.TestMgDb()
-	c.TestQuery()
-	c.TestShow()
+func (c *Client) TestAll() []common.TestRes {
+	var trs []common.TestRes
+	trs = append(trs, c.TestCQ())
+	trs = append(trs, c.TestFunc())
+	trs = append(trs, c.TestHint())
+	trs = append(trs, c.TestMathOpt())
+	trs = append(trs, c.TestInterface())
+	trs = append(trs, c.TestMgDb())
+	trs = append(trs, c.TestQuery())
+	trs = append(trs, c.TestShow())
+
+	return trs
+}
+
+func HttpHandle(c *Client) {
+	server := &http.Server{Addr: ":" + server_port}
+	for {
+		http.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+			if err := r.ParseForm(); err != nil {
+				http.Error(w, "ParseForm error", http.StatusBadRequest)
+				return
+			}
+			if r.Method != "POST" {
+				return
+			}
+
+			opt := r.FormValue("opt")
+
+			w.Header().Set("Content-Type", "application/json")
+
+			switch opt {
+			case "cq":
+				resdata, _ := json.MarshalIndent(c.TestCQ(), "", " ")
+				w.Write(resdata)
+			case "func":
+				resdata, _ := json.MarshalIndent(c.TestFunc(), "", " ")
+				w.Write(resdata)
+
+			case "hint":
+				resdata, _ := json.MarshalIndent(c.TestHint(), "", " ")
+				w.Write(resdata)
+
+			case "interface":
+				resdata, _ := json.MarshalIndent(c.TestInterface(), "", " ")
+				w.Write(resdata)
+
+			case "mathopt":
+				resdata, _ := json.MarshalIndent(c.TestMathOpt(), "", " ")
+				w.Write(resdata)
+
+			case "mgdb":
+				resdata, _ := json.MarshalIndent(c.TestMgDb(), "", " ")
+				w.Write(resdata)
+
+			case "query":
+				resdata, _ := json.MarshalIndent(c.TestQuery(), "", " ")
+				w.Write(resdata)
+
+			case "show":
+				resdata, _ := json.MarshalIndent(c.TestShow(), "", " ")
+				w.Write(resdata)
+
+			case "all":
+				resdata, _ := json.MarshalIndent(c.TestAll(), "", " ")
+				w.Write(resdata)
+			case "quit":
+				//c.WG.Done()
+				return
+			default:
+				http.Error(w, "invalid input,expect cq, func, hint, interface, mathopt, mgdb, query, show, all, quit", http.StatusBadRequest)
+			}
+
+		})
+		if err := server.ListenAndServe(); err != nil {
+			log.Fatal(err)
+		}
+
+	}
+
 }
 
 func main() {
+	common.CheckEnv()
+
 	var c = Client{
 		HttpClnt: common.HttpClnt,
-		//Chan:     make(chan common.TestRes, maxChanLen),
 	}
-	c.HttpClnt.Init(addr, os.Getenv("INFLUX_USER"), os.Getenv("INFLUX_PWD"))
+	c.HttpClnt.Init()
 	defer c.Close()
-	//c.WG.Add(1)
 
-	//finished := make(chan bool)
-	// go func() {
-	// 	for {
-	// 		select {
-	// 		case tr := <-c.Chan:
-	// 			tr.Print()
-	// 			//finished <- true
-	// 		}
-	// 	}
-	// }()
-
-	var opt string
-	for {
-		fmt.Println("Test Module(cq, func, hint, interface, mathopt, mgdb, query, show, all, quit) : ")
-		fmt.Scanln(&opt)
-		switch opt {
-		case "cq":
-			c.TestCQ()
-		case "func":
-			c.TestFunc()
-		case "hint":
-			c.TestHint()
-		case "interface":
-			c.TestInterface()
-		case "mathopt":
-			c.TestMathOpt()
-		case "mgdb":
-			c.TestMgDb()
-		case "query":
-			c.TestQuery()
-		case "show":
-			c.TestShow()
-		case "all":
-			c.TestAll()
-		case "quit":
-			//c.WG.Done()
-			return
-		default:
-			fmt.Println("invalid input,expect cq, func, hint, interface, mathopt, mgdb, query, show, all, quit")
-		}
-		//<-finished
-	}
-
-	//c.WG.Wait()
-
+	HttpHandle(&c)
 }
