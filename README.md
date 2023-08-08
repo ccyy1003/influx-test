@@ -19,7 +19,7 @@ curl -X POST http://127.0.0.1:32325/test -d "opt=mgdb"
 这里使用curl进行测试  
 “/test”：路径  
 “opt=xxx”：传递的参数，其中xxx可以为cq, func, hint, interface, mathopt, mgdb, query, show, all, quit  
-  
+   
 以json格式返回结果：  
 任务名称  
 通过数  
