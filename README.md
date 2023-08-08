@@ -1,7 +1,7 @@
 # influx-test
 ## 1、运行make命令打包成镜像
 这里暴露的端口号为32325，也是容器启动后http监听的端口
-注：启动后会分别以os.Getenv("INFLUX_TEST_ADDR")、os.Getenv("INFLUX_TEST_USER")、os.Getenv("INFLUX_TEST_PWD")作为influxdb的访问地址，用户名和密码，若需更改，可在dockerfile文件中添加相应的环境变量
+  注：启动后会分别以os.Getenv("INFLUX_TEST_ADDR")、os.Getenv("INFLUX_TEST_USER")、os.Getenv("INFLUX_TEST_PWD")作为influxdb的访问地址，用户名和密码，若需更改，可在dockerfile文件中添加相应的环境变量
 ```go
 make influx-test
 ```
