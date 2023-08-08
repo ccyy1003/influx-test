@@ -10,9 +10,7 @@ make influx-test
 ```go
 docker run -d -p 32325:32325 influx-test:<你的镜像tag>
 ```
-任务名称  
-通过率：通过数/测试总数  
-错误信息：【语法/接口名】错误命令：错误信息
+
 
 ## 3、以post发送请求
 ```go
@@ -21,3 +19,6 @@ curl -X POST http://127.0.0.1:32325/test -d "opt=mgdb"
 这里使用curl进行测试
 “/test”：路径
 “opt=xxx”：传递的参数，其中xxx可以为cq, func, hint, interface, mathopt, mgdb, query, show, all, quit
+任务名称  
+通过率：通过数/测试总数  
+错误信息：【语法/接口名】错误命令：错误信息
