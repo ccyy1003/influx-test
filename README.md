@@ -105,3 +105,21 @@ curl -X POST http://127.0.0.1:32325/test -d "opt=mgdb"
 | Client_createDatabase  	|   	|
 | Client_queryWithParams 	|   	|
 
+| mathopt              	|                                          	|
+|----------------------	|------------------------------------------	|
+| ADD                  	| SELECT A + 5 FROM math                   	|
+| SUB                  	| SELECT * FROM math WHERE 1 - A <= 3      	|
+| MUL                  	| SELECT A * B * C FROM math               	|
+| DIV                  	| SELECT 10 / (A + B + C) FROM math        	|
+| MOD                  	| SELECT B FROM math WHERE B % 2 = 0       	|
+| Bitwise AND          	| SELECT A::integer & B::integer FROM math 	|
+| Bitwise OR           	| SELECT A::integer \| 255 FROM math       	|
+| Bitwise Exclusive-OR 	| SELECT A::integer ^ 255 FROM math        	|
+
+| mgdb                              	|                                                                                                                                                                                                                                  	|
+|-----------------------------------	|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| CREATE DATABASE                   	| CREATE DATABASE test_tsdb WITH DURATION 3d REPLICATION 3 PARTITIONS 16                                                                                                                                                           	|
+| CREATE DATABASE WITH CTSDB_OPTION 	| CREATE DATABASE test_tsdb WITH DURATION 3d REPLICATION 3 PARTITIONS 16 ctsdb_option '{ \" route_tag \" : { \" measurements \" : {  \" m1 \" : [  \" t1 \" ,  \" t2 \" ,  \" t3 \" ],  \" m2 \" : [  \" t4 \" ,  \" t5 \" ]} } }' 	|
+| DROP DATABASE                     	| DROP DATABASE test_car"                                                                                                                                                                                                          	|
+| DROP MEASUREMENT                  	| DROP MEASUREMENT car                                                                                                                                                                                                             	|
+| DELETE                            	| DELETE FROM car WHERE city = 'city_0'                                                                                                                                                                                            	|
