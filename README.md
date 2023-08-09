@@ -89,3 +89,19 @@ curl -X POST http://127.0.0.1:32325/test -d "opt=mgdb"
 | hint             	|                                                                                                                                                                                                                                                                                                                                                                                             	|
 |------------------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
 | FULL SERIES CASE 	| select count(*) from \"250_20963_apm_calculate_prod_default_a82d\" where \"single_num\"::field > 0 and app::tag='1622-admin' and area::tag='qy' and cluster::tag='prodOpenTelemtry' and \"container_id\"::tag='_' and \"zyx_agg_type\"::tag='ins' and \"zyx_data_grain\"::tag='60' and \"zyx_instance_mark\"::tag='11.149.48.50' and \"zyx_version\"::tag='0' and \"single_num\"::field > 0 	|
+
+| interface              	|   	|
+|------------------------	|---	|
+| Client                 	|   	|
+| Client_uDP             	|   	|
+| Client_Ping            	|   	|
+| Client_write           	|   	|
+| BatchPoints            	|   	|
+| BatchPoints_setters    	|   	|
+| Point                  	|   	|
+| Point_withoutTime      	|   	|
+| Client_write1000       	|   	|
+| Client_query           	|   	|
+| Client_createDatabase  	|   	|
+| Client_queryWithParams 	|   	|
+
