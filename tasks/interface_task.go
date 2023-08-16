@@ -15,10 +15,6 @@ import (
 // query
 // NewUDPClient
 // NewBatchPoints
-// SetDatabase
-// SetRetentionPolicy
-// SetWriteConsistency
-// SetPrecision
 // NewPoint
 // Point_withoutTime
 // QueryWithParams
