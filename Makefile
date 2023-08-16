@@ -13,8 +13,8 @@ version:
 influx-test:
 	go build  -ldflags "$(GO_LDFLAGS)" -o ./admin/main ./admin/main.go
 	docker build  -t influx-test:${VERSION} --no-cache .
-	docker tag influx-test:${VERSION} csighub.tencentyun.com/nosql_test/influx-test:${VERSION}
-	docker push csighub.tencentyun.com/nosql_test/influx-test:${VERSION}
+	#docker tag influx-test:${VERSION} csighub.tencentyun.com/nosql_test/influx-test:${VERSION}
+	#docker push csighub.tencentyun.com/nosql_test/influx-test:${VERSION}
 	rm ./admin/main
 
 tidy:

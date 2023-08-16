@@ -9,6 +9,21 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 )
 
+// 覆盖的接口
+// NewHTTPClient
+// Ping
+// query
+// NewUDPClient
+// NewBatchPoints
+// SetDatabase
+// SetRetentionPolicy
+// SetWriteConsistency
+// SetPrecision
+// NewPoint
+// Point_withoutTime
+// QueryWithParams
+// QueryWithRP
+
 type OtherTask struct {
 }
 
@@ -26,48 +41,6 @@ func TestClient(tr *common.TestRes) {
 	})
 	if err != nil {
 		info := "[ NewHTTPClient ] :" + err.Error()
-		tr.ErrInfos = append(tr.ErrInfos, info)
-		return
-	}
-	tr.PassCnt++
-}
-
-// Write a point using the UDP client
-func TestClient_uDP(tr *common.TestRes) {
-	// Make client
-	config := client.UDPConfig{Addr: "localhost:8089"}
-	c, err := client.NewUDPClient(config)
-	if err != nil {
-		info := "[ NewUDPClient ] :" + err.Error()
-		tr.ErrInfos = append(tr.ErrInfos, info)
-		return
-	}
-	defer c.Close()
-
-	// Create a new point batch
-	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
-		Precision: "s",
-	})
-
-	// Create a point and add to batch
-	tags := map[string]string{"cpu": "cpu-total"}
-	fields := map[string]interface{}{
-		"idle":   10.1,
-		"system": 53.3,
-		"user":   46.6,
-	}
-	pt, err := client.NewPoint("cpu_usage", tags, fields, time.Now())
-	if err != nil {
-		info := "[ NewPoint ] :" + err.Error()
-		tr.ErrInfos = append(tr.ErrInfos, info)
-		return
-	}
-	bp.AddPoint(pt)
-
-	// Write the batch
-	err = c.Write(bp)
-	if err != nil {
-		info := "[ Client_uDP Write ] :" + err.Error()
 		tr.ErrInfos = append(tr.ErrInfos, info)
 		return
 	}
@@ -113,7 +86,7 @@ func TestClient_write(tr *common.TestRes) {
 
 	// Create a new point batch
 	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
-		Database:  "mdb",
+		Database:  "mydb",
 		Precision: "s",
 	})
 	if err != nil {
@@ -140,6 +113,78 @@ func TestClient_write(tr *common.TestRes) {
 	err = c.Write(bp)
 	if err != nil {
 		info := "[ Write ] :" + err.Error()
+		tr.ErrInfos = append(tr.ErrInfos, info)
+		return
+	}
+	tr.PassCnt++
+}
+
+// Make a Query
+func TestClient_query(tr *common.TestRes) {
+	// Make client
+	c, err := client.NewHTTPClient(client.HTTPConfig{
+		Addr:     common.Addr,
+		Username: common.Username,
+		Password: common.Password,
+	})
+	if err != nil {
+		fmt.Println("Error creating InfluxDB Client: ", err.Error())
+		return
+	}
+	defer c.Close()
+
+	q := client.NewQuery("SELECT count(*) FROM car", "mydb", "ns")
+	if response, err := c.Query(q); err != nil || response.Error() != nil {
+		info := "[ Query ] :"
+		if err != nil {
+			info += " " + err.Error() + " "
+		}
+		if response.Error() != nil {
+			info += " " + response.Error().Error() + " "
+		}
+		tr.ErrInfos = append(tr.ErrInfos, info)
+		return
+	}
+	tr.PassCnt++
+}
+
+// Write a point using the UDP client
+func TestClient_uDP(tr *common.TestRes) {
+	// Make client
+	config := client.UDPConfig{Addr: "localhost:8089"}
+	c, err := client.NewUDPClient(config)
+	if err != nil {
+		info := "[ NewUDPClient ] :" + err.Error()
+		tr.ErrInfos = append(tr.ErrInfos, info)
+		return
+	}
+	defer c.Close()
+
+	// Create a new point batch
+	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
+		Database:  "mydb",
+		Precision: "s",
+	})
+
+	// Create a point and add to batch
+	tags := map[string]string{"cpu": "cpu-total"}
+	fields := map[string]interface{}{
+		"idle":   10.1,
+		"system": 53.3,
+		"user":   46.6,
+	}
+	pt, err := client.NewPoint("uudp", tags, fields, time.Now())
+	if err != nil {
+		info := "[ NewPoint ] :" + err.Error()
+		tr.ErrInfos = append(tr.ErrInfos, info)
+		return
+	}
+	bp.AddPoint(pt)
+
+	// Write the batch
+	err = c.Write(bp)
+	if err != nil {
+		info := "[ Client_uDP Write ] :" + err.Error()
 		tr.ErrInfos = append(tr.ErrInfos, info)
 		return
 	}
@@ -306,64 +351,6 @@ func TestClient_write1000(tr *common.TestRes) {
 	tr.PassCnt++
 }
 
-// Make a Query
-func TestClient_query(tr *common.TestRes) {
-	// Make client
-	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     common.Addr,
-		Username: common.Username,
-		Password: common.Password,
-	})
-	if err != nil {
-		fmt.Println("Error creating InfluxDB Client: ", err.Error())
-		return
-	}
-	defer c.Close()
-
-	q := client.NewQuery("SELECT count(*) FROM car", "mydb", "ns")
-	if response, err := c.Query(q); err != nil || response.Error() != nil {
-		info := "[ Query ] :"
-		if err != nil {
-			info += " " + err.Error() + " "
-		}
-		if response.Error() != nil {
-			info += " " + response.Error().Error() + " "
-		}
-		tr.ErrInfos = append(tr.ErrInfos, info)
-		return
-	}
-	tr.PassCnt++
-}
-
-// Create a Database with a query
-func TestClient_createDatabase(tr *common.TestRes) {
-	// Make client
-	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     common.Addr,
-		Username: common.Username,
-		Password: common.Password,
-	})
-	if err != nil {
-		fmt.Println("Error creating InfluxDB Client: ", err.Error())
-		return
-	}
-	defer c.Close()
-
-	q := client.NewQuery("CREATE DATABASE mydb2", "", "")
-	if response, err := c.Query(q); err != nil || response.Error() != nil {
-		info := "[ Create a Database ] :"
-		if err != nil {
-			info += " " + err.Error() + " "
-		}
-		if response.Error() != nil {
-			info += " " + response.Error().Error() + " "
-		}
-		tr.ErrInfos = append(tr.ErrInfos, info)
-		return
-	}
-	tr.PassCnt++
-}
-
 func TestClient_queryWithParams(tr *common.TestRes) {
 	// Make client
 	c, err := client.NewHTTPClient(client.HTTPConfig{
@@ -395,6 +382,33 @@ func TestClient_queryWithParams(tr *common.TestRes) {
 	tr.PassCnt++
 }
 
+func TestClient_queryWithRP(tr *common.TestRes) {
+	// Make client
+	c, err := client.NewHTTPClient(client.HTTPConfig{
+		Addr:     common.Addr,
+		Username: common.Username,
+		Password: common.Password,
+	})
+	if err != nil {
+		fmt.Println("Error creating InfluxDB Client: ", err.Error())
+	}
+	defer c.Close()
+
+	q := client.NewQueryWithRP("select count(*) from car", "mydb", "autogen", "ms")
+	if response, err := c.Query(q); err != nil || response.Error() != nil {
+		info := "[ queryWithRP ] :"
+		if err != nil {
+			info += " " + err.Error() + " "
+		}
+		if response.Error() != nil {
+			info += " " + response.Error().Error() + " "
+		}
+		tr.ErrInfos = append(tr.ErrInfos, info)
+		return
+	}
+	tr.PassCnt++
+}
+
 func (o *OtherTask) Prepare() {}
 
 func (o *OtherTask) DbName() string { return "mydb" }
@@ -414,7 +428,7 @@ func (o *OtherTask) Start(clnt client.Client) common.TestRes {
 	TestPoint_withoutTime(&tr)
 	TestClient_write1000(&tr)
 	TestClient_query(&tr)
-	TestClient_createDatabase(&tr)
+	TestClient_queryWithRP(&tr)
 	TestClient_queryWithParams(&tr)
 
 	return tr
