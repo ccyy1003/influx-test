@@ -30,6 +30,7 @@ func (c *ClntCtx) Init() error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println(c.Addr, c.Username, c.Password)
 	c.Client = cc
 	return nil
 }

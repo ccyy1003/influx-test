@@ -2,11 +2,11 @@ package tasks
 
 import (
 	"fmt"
-	"github.com/influxdata/influxdb/client/v2"
 	"influx-test/common"
 	"math/rand"
-	"os"
 	"time"
+
+	"github.com/influxdata/influxdb/client/v2"
 )
 
 type OtherTask struct {
@@ -20,9 +20,9 @@ func TestClient(tr *common.TestRes) {
 	// NOTE: this assumes you've setup a user and have setup shell env variables,
 	// namely INFLUX_USER/INFLUX_PWD. If not just omit Username/Password below.
 	_, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     "http://localhost:8086",
-		Username: os.Getenv("INFLUX_USER"),
-		Password: os.Getenv("INFLUX_PWD"),
+		Addr:     common.Addr,
+		Username: common.Username,
+		Password: common.Password,
 	})
 	if err != nil {
 		info := "[ NewHTTPClient ] :" + err.Error()
@@ -65,7 +65,12 @@ func TestClient_uDP(tr *common.TestRes) {
 	bp.AddPoint(pt)
 
 	// Write the batch
-	c.Write(bp)
+	err = c.Write(bp)
+	if err != nil {
+		info := "[ Client_uDP Write ] :" + err.Error()
+		tr.ErrInfos = append(tr.ErrInfos, info)
+		return
+	}
 	tr.PassCnt++
 }
 
@@ -73,7 +78,9 @@ func TestClient_uDP(tr *common.TestRes) {
 func TestClient_Ping(tr *common.TestRes) {
 	// Make client
 	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr: "http://localhost:8086",
+		Addr:     common.Addr,
+		Username: common.Username,
+		Password: common.Password,
 	})
 	if err != nil {
 		fmt.Println("Error creating InfluxDB Client: ", err.Error())
@@ -94,7 +101,9 @@ func TestClient_Ping(tr *common.TestRes) {
 func TestClient_write(tr *common.TestRes) {
 	// Make client
 	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr: "http://localhost:8086",
+		Addr:     common.Addr,
+		Username: common.Username,
+		Password: common.Password,
 	})
 	if err != nil {
 		fmt.Println("Error creating InfluxDB Client: ", err.Error())
@@ -103,11 +112,15 @@ func TestClient_write(tr *common.TestRes) {
 	defer c.Close()
 
 	// Create a new point batch
-	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
+	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:  "mdb",
 		Precision: "s",
 	})
-
+	if err != nil {
+		info := "[ NewBatchPoints ] :" + err.Error()
+		tr.ErrInfos = append(tr.ErrInfos, info)
+		return
+	}
 	// Create a point and add to batch
 	tags := map[string]string{"cpu": "cpu-total"}
 	fields := map[string]interface{}{
@@ -124,18 +137,27 @@ func TestClient_write(tr *common.TestRes) {
 	bp.AddPoint(pt)
 
 	// Write the batch
-	c.Write(bp)
+	err = c.Write(bp)
+	if err != nil {
+		info := "[ Write ] :" + err.Error()
+		tr.ErrInfos = append(tr.ErrInfos, info)
+		return
+	}
 	tr.PassCnt++
 }
 
 // Create a batch and add a point
 func TestBatchPoints(tr *common.TestRes) {
 	// Create a new point batch
-	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
+	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:  "BumbleBeeTuna",
 		Precision: "s",
 	})
-
+	if err != nil {
+		info := "[ NewBatchPoints ] :" + err.Error()
+		tr.ErrInfos = append(tr.ErrInfos, info)
+		return
+	}
 	// Create a point and add to batch
 	tags := map[string]string{"cpu": "cpu-total"}
 	fields := map[string]interface{}{
@@ -156,24 +178,38 @@ func TestBatchPoints(tr *common.TestRes) {
 // Using the BatchPoints setter functions
 func TestBatchPoints_setters(tr *common.TestRes) {
 	// Create a new point batch
-	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{})
-	bp.SetDatabase("BumbleBeeTuna")
-	bp.SetPrecision("ms")
-
-	// Create a point and add to batch
-	tags := map[string]string{"cpu": "cpu-total"}
-	fields := map[string]interface{}{
-		"idle":   10.1,
-		"system": 53.3,
-		"user":   46.6,
-	}
-	pt, err := client.NewPoint("cpu_usage", tags, fields, time.Now())
+	bp, err := client.NewBatchPoints(client.BatchPointsConfig{})
 	if err != nil {
-		info := "[ NewPoint ] :" + err.Error()
+		info := "[ NewBatchPoints ] :" + err.Error()
 		tr.ErrInfos = append(tr.ErrInfos, info)
 		return
 	}
-	bp.AddPoint(pt)
+	bp.SetDatabase("BumbleBeeTuna")
+	bp.SetRetentionPolicy("rp")
+	bp.SetWriteConsistency("wc")
+	err = bp.SetPrecision("ms")
+	if err != nil {
+		info := "[ SetPrecision ] :" + err.Error()
+		tr.ErrInfos = append(tr.ErrInfos, info)
+		return
+	}
+	if bp.Precision() != "ms" {
+		tr.ErrInfos = append(tr.ErrInfos, fmt.Sprintf("[ SetPrecision ]: expect %s, get %s", "ms", bp.Precision()))
+		return
+	}
+	if bp.Database() != "BumbleBeeTuna" {
+		tr.ErrInfos = append(tr.ErrInfos, fmt.Sprintf("[ SetDatabase ]: expect %s, get %s", "ms", bp.Precision()))
+		return
+	}
+	if bp.RetentionPolicy() != "rp" {
+		tr.ErrInfos = append(tr.ErrInfos, fmt.Sprintf("[ SetRetentionPolicy ]: expect %s, get %s", "ms", bp.Precision()))
+		return
+	}
+	if bp.WriteConsistency() != "wc" {
+		tr.ErrInfos = append(tr.ErrInfos, fmt.Sprintf("[ SetWriteConsistency ]: expect %s, get %s", "ms", bp.Precision()))
+		return
+	}
+
 	tr.PassCnt++
 }
 
@@ -217,7 +253,9 @@ func TestClient_write1000(tr *common.TestRes) {
 
 	// Make client
 	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr: "http://localhost:8086",
+		Addr:     common.Addr,
+		Username: common.Username,
+		Password: common.Password,
 	})
 	if err != nil {
 		fmt.Println("Error creating InfluxDB Client: ", err.Error())
@@ -227,7 +265,7 @@ func TestClient_write1000(tr *common.TestRes) {
 
 	rand.Seed(42)
 
-	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
+	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:  "mydb",
 		Precision: "ms",
 	})
@@ -272,7 +310,9 @@ func TestClient_write1000(tr *common.TestRes) {
 func TestClient_query(tr *common.TestRes) {
 	// Make client
 	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr: "http://localhost:8086",
+		Addr:     common.Addr,
+		Username: common.Username,
+		Password: common.Password,
 	})
 	if err != nil {
 		fmt.Println("Error creating InfluxDB Client: ", err.Error())
@@ -280,7 +320,7 @@ func TestClient_query(tr *common.TestRes) {
 	}
 	defer c.Close()
 
-	q := client.NewQuery("SELECT count(value) FROM shapes", "mydb", "ns")
+	q := client.NewQuery("SELECT count(*) FROM car", "mydb", "ns")
 	if response, err := c.Query(q); err != nil || response.Error() != nil {
 		info := "[ Query ] :"
 		if err != nil {
@@ -299,7 +339,9 @@ func TestClient_query(tr *common.TestRes) {
 func TestClient_createDatabase(tr *common.TestRes) {
 	// Make client
 	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr: "http://localhost:8086",
+		Addr:     common.Addr,
+		Username: common.Username,
+		Password: common.Password,
 	})
 	if err != nil {
 		fmt.Println("Error creating InfluxDB Client: ", err.Error())
@@ -307,7 +349,7 @@ func TestClient_createDatabase(tr *common.TestRes) {
 	}
 	defer c.Close()
 
-	q := client.NewQuery("CREATE DATABASE mydb", "", "")
+	q := client.NewQuery("CREATE DATABASE mydb2", "", "")
 	if response, err := c.Query(q); err != nil || response.Error() != nil {
 		info := "[ Create a Database ] :"
 		if err != nil {
@@ -325,7 +367,9 @@ func TestClient_createDatabase(tr *common.TestRes) {
 func TestClient_queryWithParams(tr *common.TestRes) {
 	// Make client
 	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr: "http://localhost:8086",
+		Addr:     common.Addr,
+		Username: common.Username,
+		Password: common.Password,
 	})
 	if err != nil {
 		fmt.Println("Error creating InfluxDB Client: ", err.Error())
@@ -334,8 +378,8 @@ func TestClient_queryWithParams(tr *common.TestRes) {
 
 	q := client.NewQueryWithParameters("SELECT $fn($value) FROM $m", "mydb", "ns", client.Params{
 		"fn":    client.Identifier("count"),
-		"value": client.Identifier("value"),
-		"m":     client.Identifier("shapes"),
+		"value": client.Identifier("*"),
+		"m":     client.Identifier("car"),
 	})
 	if response, err := c.Query(q); err != nil || response.Error() != nil {
 		info := "[ queryWithParams ] :"

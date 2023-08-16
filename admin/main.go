@@ -177,12 +177,15 @@ func HttpHandle(c *Client) {
 
 func main() {
 	common.CheckEnv()
-
+	log.Println("check success")
 	var c = Client{
 		HttpClnt: common.HttpClnt,
 	}
 	c.HttpClnt.Init()
+	log.Println("connected influxdb success")
 	defer c.Close()
 
+	data.Init(c.HttpClnt.Client)
+	log.Println("init influxdb success")
 	HttpHandle(&c)
 }
